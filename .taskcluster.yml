@@ -1,0 +1,31 @@
+version: 1
+reporting: checks-v1
+policy:
+  pullRequests: public
+tasks:
+  $let:
+    head_rev:
+      $if: tasks_for == "github-pull-request"
+      then: ${event.pull_request.head.sha}
+      else: ${event.after}
+    repository:
+      $if: tasks_for == "github-pull-request"
+      then: ${event.pull_request.head.repo.html_url}
+      else: ${event.repository.html_url}
+  in:
+    $match:
+      (tasks_for == "github-pull-request" && event["action"] in ["opened","reopened","synchronize"]):
+        taskId:
+          $eval: as_slugid("test")
+        deadline:
+          $fromNow: 1 day
+        taskQueueId: proj-getting-started/tutorial
+        metadata:
+          name: withinloop-users
+          description: withinloop-users
+          owner: ${event.sender.login}@users.noreply.github.com
+          source: ${event.repository.url}
+        payload:
+          maxRunTime: 3600
+          image: node
+          command: []
